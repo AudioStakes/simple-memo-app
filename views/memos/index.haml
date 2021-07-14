@@ -1,0 +1,7 @@
+%h1 メモアプリ
+
+- @memos.each do |id, title, _content|
+  %ul
+    %li
+      %a{href: "/memos/#{id}"}= title
+
