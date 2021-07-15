@@ -22,3 +22,19 @@ get %r{/memos/(\d+)} do
     error 404
   end
 end
+
+delete %r{/memos/(\d+)} do
+  csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
+
+  if (target_index = csv.find_index { |row| row[:id] == params['captures'].first })
+    csv.delete(target_index)
+
+    File.open(CSV_FILE_PATH, 'w') do |f|
+      f.write(csv.to_csv)
+    end
+
+    redirect :'memos/index'
+  else
+    error 400 # より適したステータスコードがあるかも？
+  end
+end

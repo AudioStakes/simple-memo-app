@@ -1,4 +1,19 @@
 %h1= @memo[:title]
 %p= @memo[:content]
 %a{href: "/memos/#{@memo[:id]}/edit"} 変更
-%button{href: ''} 削除
+%button#delete{href: '', memo_id: "#{@memo[:id]}"} 削除
+
+:javascript
+  document.querySelector('#delete').addEventListener('click', function(event) {
+    if(window.confirm('本当に削除しますか？')) {
+      const memoId = this.getAttribute('memo_id')
+
+      fetch('/memos/' + memoId, {method: 'DELETE'})
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error();
+            }
+            location.href = response.url
+        })
+    }
+  });
