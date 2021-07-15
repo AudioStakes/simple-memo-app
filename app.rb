@@ -11,3 +11,14 @@ get %r{(/|/memos/index)} do
 
   haml :'memos/index'
 end
+
+get %r{/memos/(\d+)} do
+  csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
+  @memo = csv.find { |row| row[:id] == params['captures'].first }
+
+  if @memo
+    haml :'memos/show'
+  else
+    error 404
+  end
+end

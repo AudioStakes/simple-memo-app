@@ -1,0 +1,4 @@
+%h1= @memo[:title]
+%p= @memo[:content]
+%a{href: "/memos/#{@memo[:id]}/edit"} 変更
+%button{href: ''} 削除
