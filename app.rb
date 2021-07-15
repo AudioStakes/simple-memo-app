@@ -23,6 +23,29 @@ get %r{/memos/(\d+)} do
   end
 end
 
+get '/memos/new' do
+  @memo ||= []
+
+  haml :'memos/new'
+end
+
+post '/memos' do
+  title = request['title']
+  content = request['content']
+
+  if title && content
+    CSV.open(CSV_FILE_PATH, File::Constants::RDWR, encoding: 'bom|utf-8', headers: true, header_converters: :symbol) do |csv|
+      max_id = csv.max_by { |row| row[:id].to_i }[:id].to_i
+
+      csv << [max_id + 1, title, content]
+    end
+
+    redirect :'memos/index'
+  else
+    error 400
+  end
+end
+
 delete %r{/memos/(\d+)} do
   csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
 
