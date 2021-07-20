@@ -4,6 +4,10 @@ require 'csv'
 require 'sinatra'
 require 'sinatra/reloader' if development?
 
+configure do
+  set :haml, escape_html: true
+end
+
 CSV_FILE_PATH = './memos.csv'
 
 get %r{(/|/memos/index)} do
