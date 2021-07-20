@@ -2,8 +2,8 @@
 
 %a{href: '/memos/new'} 追加
 
-- @memos.each do |id, title, _content|
+- @memos.each do |memo|
   %ul
     %li
-      %a{href: "/memos/#{id}"}= title
+      %a{href: "/memos/#{memo.id}"}= memo.title
 

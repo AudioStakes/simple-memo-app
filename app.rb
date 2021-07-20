@@ -1,108 +1,75 @@
 # frozen_string_literal: true
 
-require 'csv'
 require 'sinatra'
 require 'sinatra/reloader' if development?
+require_relative './models/memo'
 
 configure do
   set :haml, escape_html: true
 end
 
-CSV_FILE_PATH = './memos.csv'
+helpers do
+  def find_memo(id)
+    @memo = Memo.find(id)
+  end
+end
 
-get %r{(/|/memos/index)} do
-  @memos = CSV.read(CSV_FILE_PATH)[1..].sort
+get '/' do
+  redirect to('/memos')
+end
+
+get '/memos' do
+  @memos = Memo.all
 
   haml :'memos/index'
 end
 
-get %r{/memos/(\d+)} do
-  csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
-  @memo = csv.find { |row| row[:id] == params['captures'].first }
-
-  if @memo
+get %r{/memos/(\d+)} do |id|
+  if find_memo(id)
     haml :'memos/show'
   else
-    error 404
+    not_found
   end
 end
 
 get '/memos/new' do
-  @memo ||= []
-
   haml :'memos/new'
 end
 
-post '/memos' do
-  title = request['title']
-  content = request['content']
-
-  if title && content
-    CSV.open(CSV_FILE_PATH, File::Constants::RDWR, encoding: 'bom|utf-8', headers: true, header_converters: :symbol) do |csv|
-      max_id = csv.max_by { |row| row[:id].to_i }[:id].to_i
-
-      csv << [max_id + 1, title, content]
-    end
-
-    redirect :'memos/index'
-  else
-    error 400
-  end
-end
-
-get %r{/memos/(\d+)/edit} do
-  target_id = params['captures'].first
-  csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
-  @memo = csv.find { |row| row[:id] == target_id }
-
-  if @memo
+get %r{/memos/(\d+)/edit} do |id|
+  if find_memo(id)
     haml :'memos/edit'
   else
-    error 404
+    not_found
   end
 end
 
-patch %r{/memos/(\d+)} do
-  target_id = params['captures'].first
-  title = request['title']
-  content = request['content']
+post '/memos' do
+  @memo = Memo.create(title: params[:title], content: params[:content])
 
-  if title && content
-    csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
+  redirect to("/memos/#{@memo.id}")
+end
 
-    if (target_row = csv.find { |row| row[:id] == target_id })
-      csv.delete_if { |row| row[:id] == target_id }
+patch %r{/memos/(\d+)} do |id|
+  if find_memo(id)
+    @memo.update(title: params[:title], content: params[:content])
 
-      target_row[:title] = title
-      target_row[:content] = content
-
-      csv << target_row
-
-      # sort した方が良いかも？
-
-      File.open(CSV_FILE_PATH, 'w') do |f|
-        f.write(csv.to_csv)
-      end
-    end
-
-    redirect :'memos/index'
+    redirect to("/memos/#{id}")
   else
-    error 400 # より適したステータスコードがあるかも？
+    not_found
   end
 end
 
-delete %r{/memos/(\d+)} do
-  csv = CSV.read(CSV_FILE_PATH, encoding: 'bom|utf-8', headers: true, header_converters: :symbol)
+delete %r{/memos/(\d+)} do |id|
+  if find_memo(id)
+    @memo.destroy
 
-  if (target_index = csv.find_index { |row| row[:id] == params['captures'].first })
-    csv.delete(target_index)
-
-    File.open(CSV_FILE_PATH, 'w') do |f|
-      f.write(csv.to_csv)
-    end
-
-    redirect :'memos/index'
+    redirect to('/memos')
   else
-    error 400 # より適したステータスコードがあるかも？
+    not_found
   end
+end
+
+not_found do
+  'This is nowhere to be found.'
 end
