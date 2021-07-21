@@ -8,12 +8,18 @@
     $ bundle install
     ```
 
-2. アプリケーションを起動
+2. 初期データを投入した CSV ファイルを作成
+
+    ```
+    $ bundle exec ruby prepare.rb
+    ```
+
+3. アプリケーションを起動
 
     ```
     $ bundle exec ruby app.rb
     ```
 
-3. ブラウザからアプリケーションにアクセス
+4. ブラウザからアプリケーションにアクセス
 
     http://localhost:4567
