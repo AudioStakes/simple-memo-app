@@ -1,7 +1,7 @@
-%a{href: '/memos/new'} 追加
+.actions
+  %a{ href: '/memos/new' } メモを追加する
 
 - @memos.each do |memo|
-  %ul
-    %li
-      %a{href: "/memos/#{memo.id}"}= memo.title
+  %h3
+    %a{ href: "/memos/#{memo.id}" }= memo.title
 

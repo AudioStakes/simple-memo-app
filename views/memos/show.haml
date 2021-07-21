@@ -1,9 +1,11 @@
 %h2= @memo.title
-%p= @memo.content
+%p.content= @memo.content
 
-%a{href: "/memos/#{@memo.id}/edit"} 変更
-%form{action: "/memos/#{@memo.id}", method: 'post'}
-  %input{type: 'hidden', name: '_method', value: 'delete'}
-  %input{type: 'submit', value: '削除'}
+.actions
+  %a{ href: "/memos/#{@memo.id}/edit" } 変更する
 
-%a{href: '/memos'} 一覧へ戻る
+  %a{ href: '/memos' } 一覧へ戻る
+
+  %form{ action: "/memos/#{@memo.id}", method: 'post', onsubmit: 'return confirm("本当に削除しますか？");' }
+    %input{ type: 'hidden', name: '_method', value: 'delete' }
+    %input.delete{ type: 'submit', value: '削除する' }
