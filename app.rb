@@ -71,5 +71,6 @@ delete %r{/memos/(\d+)} do |id|
 end
 
 not_found do
-  'This is nowhere to be found.'
+  @title = '404 Not Found'
+  haml :'errors/404'
 end
