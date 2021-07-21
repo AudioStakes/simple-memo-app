@@ -1,8 +1,8 @@
-%h1 メモアプリ
-
 %form{ action: '/memos', method: 'post'}
   .field
     %input#title{name: 'title', type: 'text', required: true}
   .field
-    %textarea#memo_content{name: 'content', required: true}
+    %textarea#content{name: 'content', required: true}
   %input{type: 'submit', value: '保存'}
+
+%a{href: '/memos'} 一覧へ戻る

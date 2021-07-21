@@ -1,6 +1,9 @@
-%h1= @memo.title
+%h2= @memo.title
 %p= @memo.content
+
 %a{href: "/memos/#{@memo.id}/edit"} 変更
 %form{action: "/memos/#{@memo.id}", method: 'post'}
   %input{type: 'hidden', name: '_method', value: 'delete'}
   %input{type: 'submit', value: '削除'}
+
+%a{href: '/memos'} 一覧へ戻る

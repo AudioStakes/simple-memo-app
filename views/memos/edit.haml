@@ -1,9 +1,9 @@
-%h1 メモアプリ
-
 %form{ action: "/memos/#{@memo.id}", method: 'post'}
   %input{name: '_method', type: 'hidden', value: 'patch'}
   .field
     %input#memo_title{name: 'title', type: 'text', value: @memo.title, required: true}
   .field
     %textarea#memo_content{name: 'content', required: true}= @memo.content
-  %input{type: 'submit', value: '保存'}
+  %input{type: 'submit', value: '変更'}
+
+%a{href: '/memos'} 一覧へ戻る
