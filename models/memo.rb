@@ -19,21 +19,18 @@ class Memo
     end
 
     def create(title:, content:)
-      memo_arrays = CSV.read(CSV_PATH)
-      max_id      = memo_arrays.transpose[0].map(&:to_i).max
+      max_id = 0
 
-      memo = new(id: max_id + 1, title: title, content: content)
+      CSV.open(CSV_PATH, 'a+') do |csv|
+        csv.flock(File::LOCK_EX)
 
-      memo_arrays << [memo.id, memo.title, memo.content]
-      Memo.save(memo_arrays)
+        memo_arrays = csv.read
+        max_id      = memo_arrays.transpose[0].map(&:to_i).max
 
-      memo
-    end
+        csv << [max_id + 1, title, content]
+      end
 
-    def save(memo_arrays)
-      memo_arrays = memo_arrays.sort_by { |row| row[0].to_i }
-
-      File.write(CSV_PATH, memo_arrays.map(&:to_csv).join)
+      new(id: max_id + 1, title: title, content: content)
     end
   end
 
@@ -47,18 +44,26 @@ class Memo
     @title   = title
     @content = content
 
-    memo_arrays  = CSV.read(CSV_PATH)
-    target_index = memo_arrays.index { |row| row[0] == @id.to_s }
+    CSV.open(CSV_PATH, 'r') do |csv|
+      csv.flock(File::LOCK_EX)
 
-    memo_arrays[target_index] = [@id, @title, @content]
+      memo_arrays  = csv.read
+      target_index = memo_arrays.index { |row| row[0] == @id.to_s }
 
-    Memo.save(memo_arrays)
+      memo_arrays[target_index] = [@id, title, content]
+
+      File.write(CSV_PATH, memo_arrays.map(&:to_csv).join)
+    end
   end
 
   def destroy
-    memo_arrays = CSV.read(CSV_PATH)
-    memo_arrays = memo_arrays.delete_if { |row| row[0] == @id.to_s }
+    CSV.open(CSV_PATH, 'r') do |csv|
+      csv.flock(File::LOCK_EX)
 
-    Memo.save(memo_arrays)
+      memo_arrays = csv.read
+      memo_arrays = memo_arrays.delete_if { |row| row[0] == @id.to_s }
+
+      File.write(CSV_PATH, memo_arrays.map(&:to_csv).join)
+    end
   end
 end
