@@ -6,6 +6,7 @@ require_relative './models/memo'
 
 configure do
   set :haml, escape_html: true
+  set :strict_paths, false
 end
 
 helpers do
@@ -72,5 +73,6 @@ end
 
 not_found do
   @title = '404 Not Found'
+
   haml :'errors/404'
 end
