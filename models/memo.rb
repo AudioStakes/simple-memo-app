@@ -1,36 +1,41 @@
 # frozen_string_literal: true
 
-require 'csv'
+require 'json'
 
 class Memo
-  CSV_PATH = File.expand_path('../memos.csv', __dir__)
+  JSON_PATH = File.expand_path('../memos.json', __dir__)
 
   attr_reader :id, :title, :content
 
   class << self
     def all
-      CSV.read(CSV_PATH)[1..].map { |id, title, content| new(id: id, title: title, content: content) }
+      JSON.load_file(JSON_PATH, symbolize_names: true)
+          .sort_by { |h| h[:id] }
+          .map { |memo_hash| new(**memo_hash) }
     end
 
     def find(id)
-      memo_array = CSV.read(CSV_PATH).find { |row| row[0] == id.to_s }
+      memo_hash = JSON.load_file(JSON_PATH, symbolize_names: true).find { |hash| hash[:id] == id.to_i }
 
-      new(id: memo_array[0], title: memo_array[1], content: memo_array[2]) if memo_array
+      new(**memo_hash) if memo_hash
     end
 
     def create(title:, content:)
-      max_id = 0
+      memo_hash = { title: title, content: content }
 
-      CSV.open(CSV_PATH, 'a+') do |csv|
-        csv.flock(File::LOCK_EX)
+      File.open(JSON_PATH, 'r') do |file|
+        file.flock(File::LOCK_EX)
 
-        memo_arrays = csv.read
-        max_id      = memo_arrays.transpose[0].map(&:to_i).max
+        memo_hashes    = JSON.load_file(JSON_PATH, symbolize_names: true)
+        max_id         = memo_hashes.max_by { |hash| hash[:id] }[:id]
+        memo_hash[:id] = max_id + 1
 
-        csv << [max_id + 1, title, content]
+        memo_hashes << memo_hash
+
+        File.write(JSON_PATH, JSON.dump(memo_hashes))
       end
 
-      new(id: max_id + 1, title: title, content: content)
+      new(**memo_hash)
     end
   end
 
@@ -44,26 +49,27 @@ class Memo
     @title   = title
     @content = content
 
-    CSV.open(CSV_PATH, 'r') do |csv|
-      csv.flock(File::LOCK_EX)
+    File.open(JSON_PATH, 'r') do |file|
+      file.flock(File::LOCK_EX)
 
-      memo_arrays  = csv.read
-      target_index = memo_arrays.index { |row| row[0] == @id.to_s }
+      memo_hashes = JSON.load_file(JSON_PATH, symbolize_names: true)
+      target_hash = memo_hashes.find { |hash| hash[:id] == @id }
 
-      memo_arrays[target_index] = [@id, title, content]
+      target_hash[:title] = title
+      target_hash[:content] = content
 
-      File.write(CSV_PATH, memo_arrays.map(&:to_csv).join)
+      File.write(JSON_PATH, JSON.dump(memo_hashes))
     end
   end
 
   def destroy
-    CSV.open(CSV_PATH, 'r') do |csv|
-      csv.flock(File::LOCK_EX)
+    File.open(JSON_PATH, 'r') do |file|
+      file.flock(File::LOCK_EX)
 
-      memo_arrays = csv.read
-      memo_arrays = memo_arrays.delete_if { |row| row[0] == @id.to_s }
+      memo_hashes = JSON.load_file(JSON_PATH, symbolize_names: true)
+      memo_hashes = memo_hashes.delete_if { |hash| hash[:id] == @id }
 
-      File.write(CSV_PATH, memo_arrays.map(&:to_csv).join)
+      File.write(JSON_PATH, JSON.dump(memo_hashes))
     end
   end
 end

@@ -8,7 +8,7 @@
     $ bundle install
     ```
 
-2. 初期データを投入した CSV ファイルを作成
+2. 初期データを投入した JSON ファイルを作成
 
     ```
     $ bundle exec ruby prepare.rb
