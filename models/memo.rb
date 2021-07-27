@@ -1,41 +1,31 @@
 # frozen_string_literal: true
 
-require 'json'
+require 'pg'
 
 class Memo
-  JSON_PATH = File.expand_path('../memos.json', __dir__)
+  @conn = PG.connect(dbname: 'simple_memo_app_development').tap { |conn| conn.field_name_type = :symbol }
 
   attr_reader :id, :title, :content
 
   class << self
     def all
-      JSON.load_file(JSON_PATH, symbolize_names: true)
-          .sort_by { |h| h[:id] }
-          .map { |memo_hash| new(**memo_hash) }
+      result = @conn.exec('SELECT id, title, content FROM memos ORDER BY id')
+
+      result.map { |memo_hash| new(**memo_hash) }
     end
 
     def find(id)
-      memo_hash = JSON.load_file(JSON_PATH, symbolize_names: true).find { |hash| hash[:id] == id.to_i }
+      result    = @conn.exec_params('SELECT id, title, content FROM memos WHERE id = $1', [id])
+      memo_hash = result.first
 
       new(**memo_hash) if memo_hash
     end
 
     def create(title:, content:)
-      memo_hash = { title: title, content: content }
+      result      = @conn.exec_params('INSERT INTO memos (title, content) VALUES ($1, $2) RETURNING id', [title, content])
+      assigned_id = result.first[:id]
 
-      File.open(JSON_PATH, 'r') do |file|
-        file.flock(File::LOCK_EX)
-
-        memo_hashes    = JSON.load_file(JSON_PATH, symbolize_names: true)
-        max_id         = memo_hashes.max_by { |hash| hash[:id] }[:id]
-        memo_hash[:id] = max_id + 1
-
-        memo_hashes << memo_hash
-
-        File.write(JSON_PATH, JSON.dump(memo_hashes))
-      end
-
-      new(**memo_hash)
+      new(id: assigned_id, title: title, content: content)
     end
   end
 
@@ -49,27 +39,16 @@ class Memo
     @title   = title
     @content = content
 
-    File.open(JSON_PATH, 'r') do |file|
-      file.flock(File::LOCK_EX)
-
-      memo_hashes = JSON.load_file(JSON_PATH, symbolize_names: true)
-      target_hash = memo_hashes.find { |hash| hash[:id] == @id }
-
-      target_hash[:title] = title
-      target_hash[:content] = content
-
-      File.write(JSON_PATH, JSON.dump(memo_hashes))
-    end
+    conn.exec_params('UPDATE memos SET title = $1, content = $2 WHERE id = $3', [title, content, @id])
   end
 
   def destroy
-    File.open(JSON_PATH, 'r') do |file|
-      file.flock(File::LOCK_EX)
+    conn.exec_params('DELETE FROM memos WHERE id = $1', [@id])
+  end
 
-      memo_hashes = JSON.load_file(JSON_PATH, symbolize_names: true)
-      memo_hashes = memo_hashes.delete_if { |hash| hash[:id] == @id }
+  private
 
-      File.write(JSON_PATH, JSON.dump(memo_hashes))
-    end
+  def conn
+    self.class.instance_variable_get(:@conn)
   end
 end
