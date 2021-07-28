@@ -1,31 +1,35 @@
 # frozen_string_literal: true
 
-require 'pg'
+require_relative '../lib/singleton_connection'
 
 class Memo
-  @conn = PG.connect(dbname: 'simple_memo_app_development').tap { |conn| conn.field_name_type = :symbol }
-
   attr_reader :id, :title, :content
 
   class << self
     def all
-      result = @conn.exec('SELECT id, title, content FROM memos ORDER BY id')
+      result = exec_query('SELECT id, title, content FROM memos ORDER BY id')
 
       result.map { |memo_hash| new(**memo_hash) }
     end
 
     def find(id)
-      result    = @conn.exec_params('SELECT id, title, content FROM memos WHERE id = $1', [id])
+      result    = exec_query('SELECT id, title, content FROM memos WHERE id = $1', [id])
       memo_hash = result.first
 
       new(**memo_hash) if memo_hash
     end
 
     def create(title:, content:)
-      result      = @conn.exec_params('INSERT INTO memos (title, content) VALUES ($1, $2) RETURNING id', [title, content])
+      result      = exec_query('INSERT INTO memos (title, content) VALUES ($1, $2) RETURNING id', [title, content])
       assigned_id = result.first[:id]
 
       new(id: assigned_id, title: title, content: content)
+    end
+
+    def exec_query(sql, params = [])
+      conn = SingletonConnection.instance.conn
+
+      conn.exec_params(sql, params)
     end
   end
 
@@ -39,16 +43,10 @@ class Memo
     @title   = title
     @content = content
 
-    conn.exec_params('UPDATE memos SET title = $1, content = $2 WHERE id = $3', [title, content, @id])
+    self.class.exec_query('UPDATE memos SET title = $1, content = $2 WHERE id = $3', [title, content, @id])
   end
 
   def destroy
-    conn.exec_params('DELETE FROM memos WHERE id = $1', [@id])
-  end
-
-  private
-
-  def conn
-    self.class.instance_variable_get(:@conn)
+    self.class.exec_query('DELETE FROM memos WHERE id = $1', [@id])
   end
 end
