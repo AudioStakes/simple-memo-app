@@ -1,0 +1,11 @@
+%form{ action: '/memos', method: 'post' }
+  .form-items
+    %input#title{ name: 'title', type: 'text', required: true, maxlength: 50 }
+
+  .form-items
+    %textarea#content{ name: 'content', required: true }
+
+  .actions
+    %input{ type: 'submit', value: '保存する' }
+    %a{ href: '/memos' } 一覧へ戻る
+

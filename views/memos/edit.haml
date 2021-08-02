@@ -1,0 +1,12 @@
+%form{ action: "/memos/#{@memo.id}", method: 'post' }
+  %input{ name: '_method', type: 'hidden', value: 'patch' }
+
+  .form-items
+    %input#title{ name: 'title', type: 'text', value: @memo.title, required: true , maxlength: 50}
+
+  .form-items
+    %textarea#content{ name: 'content', required: true }= @memo.content
+
+  .actions
+    %input{ type: 'submit', value: '保存する' }
+    %a{ href: '/memos' } 一覧へ戻る

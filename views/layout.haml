@@ -1,0 +1,12 @@
+- @title ||= 'メモアプリ'
+
+!!!
+%html
+  %head
+    %meta{ charset: 'UTF-8' }
+    %title= @title
+    %link{ href: '/style.css', rel: 'stylesheet' }
+  %body
+    .container
+      %h1= @title
+      != yield

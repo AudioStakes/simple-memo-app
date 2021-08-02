@@ -1,0 +1,7 @@
+.actions
+  %a{ href: '/memos/new' } メモを追加する
+
+- @memos.each do |memo|
+  %h3
+    %a{ href: "/memos/#{memo.id}" }= memo.title
+
