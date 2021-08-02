@@ -33,7 +33,7 @@ class Memo
     end
   end
 
-  def initialize(id: nil, title: nil, content: nil)
+  def initialize(id:, title:, content:)
     @id      = id
     @title   = title
     @content = content
