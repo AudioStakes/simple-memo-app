@@ -9,6 +9,7 @@ ruby '3.0.2'
 gem 'sinatra'
 
 gem 'haml'
+gem 'pg'
 gem 'webrick'
 
 group :development do
